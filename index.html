@@ -13,21 +13,21 @@
           
            var headings = allTextLines[0].split(',');
            var states = headings.slice(1);
-           console.log("states");
-           console.log(states);
-           console.log("alltextlinse");
-           console.log(allTextLines);
+          //  console.log("states");
+          //  console.log(states);
+          //  console.log("alltextlinse");
+          //  console.log(allTextLines);
            var numbers = allTextLines.slice(1);
-           console.log("numbers");
-           console.log(numbers);
+          //  console.log("numbers");
+          //  console.log(numbers);
            var allDays = {};
           for (var j=0; j<numbers.length;j++) {
             var line = numbers[j];
-            console.log(line);
+            // console.log(line);
             var entries = line.split(',');
             var date = entries[0];
             var stateEntries = entries.slice(1);
-            console.log(stateEntries);
+            // console.log(stateEntries);
             allDays[date] = {};
 
             for (var i =0; i < stateEntries.length; i++) {  
@@ -106,8 +106,8 @@
             });
           }, 1000);
         }
-        var url = "https://raw.githubusercontent.com/rahulgurnani/rahulgurnani.github.io/master/_data/corona_india.csv";
-        getText(url);
+        var csvurl = "https://raw.githubusercontent.com/rahulgurnani/COVID-19-India/master/data/statewise.csv";
+        getText(csvurl);
     </script>
 </body>
 
