@@ -1,116 +1,69 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-<h2>Distribution of number of people having COVID-19 in India</h2>
-<body>
-    <script src="http://d3js.org/d3.v3.min.js"></script>
-    <script src="http://d3js.org/topojson.v1.min.js"></script>
-    <script src="https://rawgit.com/Anujarya300/bubble_maps/master/data/geography-data/datamaps.none.js"></script>
-    <div id="india" style="height: 600px; width: 900px;"></div>
-    <script>
-        function parseCsv(data) {
-          var allTextLines = data.split(/\r\n|\n/);
-          
-           var headings = allTextLines[0].split(',');
-           var states = headings.slice(1);
-          //  console.log("states");
-          //  console.log(states);
-          //  console.log("alltextlinse");
-          //  console.log(allTextLines);
-           var numbers = allTextLines.slice(1);
-          //  console.log("numbers");
-          //  console.log(numbers);
-           var allDays = {};
-          for (var j=0; j<numbers.length;j++) {
-            var line = numbers[j];
-            // console.log(line);
-            var entries = line.split(',');
-            var date = entries[0];
-            var stateEntries = entries.slice(1);
-            // console.log(stateEntries);
-            allDays[date] = {};
+<h2>
+  Distribution of number of people having COVID-19 in India
+</h2>
+<style>
+  .slider {
+    margin-top: 100px;
+  }
 
-            for (var i =0; i < stateEntries.length; i++) {  
-              var count = 0;
-              if(stateEntries[i].length > 0) {
-                count = Number(stateEntries[i]);
-              }
-              allDays[date][states[i]] = count;
-            }
-          }
-          console.log(allDays);
-          return allDays;
+  div.timeline {
+    width: 200px;
+    margin-left: 400px;
+  }
+</style>
+
+<body>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://d3js.org/topojson.v1.min.js"></script>
+  <script src="util.js"></script>
+  <script src="https://rawgit.com/Anujarya300/bubble_maps/master/data/geography-data/datamaps.none.js"></script>
+  <div id="india" style="height: 600px; width: 900px;"></div>
+  <div class="timeline" id="slidercontainer">
+    <input type="range" class="slider" id="daterange" onchange="updateDate(this.value)" oninput="updateDate(this.value)"
+      name="ad">
+    <p>As on : <span id="date"></span></p>
+  </div>
+  <div id="output">
+  </div>
+  <script>
+
+    function createMap() {
+      bubble_map = new Datamap({
+        element: document.getElementById('india'),
+        scope: 'india',
+        geographyConfig: {
+          popupOnHover: true,
+          highlightOnHover: true,
+          borderColor: '#444',
+          borderWidth: 0.5,
+          dataUrl: 'https://rawgit.com/Anujarya300/bubble_maps/master/data/geography-data/india.topo.json'
+          //dataJson: topoJsonData
+        },
+        fills: {
+          'MAJOR': '#306596',
+          'MEDIUM': '#0fa0fa',
+          'MINOR': '#bada55',
+          defaultFill: '#dddddd'
+        },
+        setProjection: function (element) {
+          var projection = d3.geo.mercator()
+            .center([78.9629, 23.5937]) // always in [East Latitude, North Longitude]
+            .scale(1000);
+          var path = d3.geo.path().projection(projection);
+          return { path: path, projection: projection };
         }
-        function getText(url){
-          // read text from URL location
-          var request = new XMLHttpRequest();
-          request.open('GET', url, true);
-          request.send(null);
-          request.onreadystatechange = function () {
-              if (request.readyState === 4 && request.status === 200) {
-                  var type = request.getResponseHeader('Content-Type');
-                  if (type.indexOf("text") !== 1) {
-                      var alldays = parseCsv(request.responseText);
-                      console.log(alldays);
-                      plotMap(alldays);
-                      return request.responseText;
-                  }
-              }
-          }
-        }
-        function plotMap(data) {
-          var numbers = data["15/3/2020"];
-          // TODO(rahul): get rid of this hack
-          numbers['Jammu & Kashmir'] += numbers['Ladakh'];
-          state_id = {'Andaman & Nicobar Island': 'AN', 'Andhra Pradesh': 'AP', 'Arunanchal Pradesh': 'AR', 'Assam': 'AS', 'Bihar': 'BR', 'Chhattisgarh': 'CT', 'Puducherry': 'PY', 'Punjab': 'PB', 'Rajasthan': 'RJ', 'Sikkim': 'SK', 'Tamil Nadu': 'TN', 'Chandigarh': 'CH', 'Telangana': 'TS', 'Tripura': 'TR', 'Uttar Pradesh': 'UP', 'Uttarakhand': 'UK', 'West Bengal': 'WB', 'Odisha': 'OD', 'Dadara & Nagar Havelli': 'DN', 'Daman & Diu': 'DD', 'Goa': 'GA', 'Gujarat': 'GJ', 'Haryana': 'HR', 'Himachal Pradesh': 'HP', 'Jammu & Kashmir': 'JK', 'Jharkhand': 'JH', 'Karnataka': 'KA', 'Kerala': 'KL', 'Lakshadweep': 'LD', 'Madhya Pradesh': 'MP', 'Maharashtra': 'MH', 'Manipur': 'MN', 'Meghalaya': 'ML', 'Mizoram': 'MZ', 'Nagaland': 'NL', 'NCT of Delhi': 'DL'};
-          var bubble_map = new Datamap({
-            element: document.getElementById('india'),
-            scope: 'india',
-            geographyConfig: {
-                popupOnHover: true,
-                highlightOnHover: true,
-                borderColor: '#444',
-                borderWidth: 0.5,
-                dataUrl: 'https://rawgit.com/Anujarya300/bubble_maps/master/data/geography-data/india.topo.json'
-                //dataJson: topoJsonData
-            },
-            fills: {
-                'MAJOR': '#306596',
-                'MEDIUM': '#0fa0fa',
-                'MINOR': '#bada55',
-                defaultFill: '#dddddd'
-            },
-            setProjection: function (element) {
-                var projection = d3.geo.mercator()
-                    .center([78.9629, 23.5937]) // always in [East Latitude, North Longitude]
-                    .scale(1000);
-                var path = d3.geo.path().projection(projection);
-                return { path: path, projection: projection };
-            }
-        });
-        var bubbles = [];
-        for (var name in state_id) {
-          var bubble = {
-            centered: state_id[name], 
-            fillKey: "MAJOR", 
-            radius: Math.sqrt(numbers[name])*2, 
-            cases: numbers[name],
-            state: name
-          };
-          bubbles.push(bubble);
-        }
-        
-        setTimeout(() => { // only start drawing bubbles on the map when map has rendered completely.
-            bubble_map.bubbles(bubbles, {
-                popupTemplate: function (geo, data) {
-                    return `<div class="hoverinfo">Region: ${data.state}, Cases: ${data.cases}</div>`;
-                }
-            });
-          }, 1000);
-        }
-        var csvurl = "https://raw.githubusercontent.com/rahulgurnani/COVID-19-India/master/data/statewise.csv";
-        getText(csvurl);
-    </script>
+      });
+    }
+    createMap();
+
+    var csvurl = "https://raw.githubusercontent.com/rahulgurnani/COVID-19-India/master/data/statewise.csv";
+    var rawData = getText(csvurl);
+    dateOutput = document.getElementById("date");
+    dateRange = document.getElementById("daterange");
+  </script>
 </body>
 
 </html>
