@@ -4,6 +4,8 @@ var dates = [];
 var bubble_map;
 var dateOutput;
 var dateRange;
+var selectedDate;
+var detailStats;
 
 const state_id_map = {
   "Andaman & Nicobar Island": "AN",
@@ -54,49 +56,37 @@ function initTimeline() {
 }
 
 function updateDate(value) {
-  var selectedDate = dates[value - 1];
-  dateOutput.innerHTML = selectedDate;
+  selectedDate = dates[value - 1];
+  var displayDate = selectedDate.replace("_", "/") + "/2020";
+  dateOutput.innerHTML = displayDate;
   plotMap(allData[selectedDate]);
+  showAggregateStats();
 }
 
-function parseCsv(data) {
-  var allTextLines = data.split(/\r\n|\n/);
-  var headings = allTextLines[0].split(",");
-  var states = headings.slice(1);
-  var numbers = allTextLines.slice(1);
-  var allDays = {};
-  for (var j = 0; j < numbers.length; j++) {
-    var line = numbers[j];
-    var entries = line.split(",");
-    var date = entries[0];
-    if (!date.length) {
-      continue;
-    }
-    var stateEntries = entries.slice(1);
-    allDays[date] = {};
-    for (var i = 0; i < stateEntries.length; i++) {
-      var count = 0;
-      if (stateEntries[i].length > 0) {
-        count = Number(stateEntries[i]);
-      }
-      allDays[date][states[i]] = count;
-    }
-  }
-
-  return allDays;
-}
 function plotMap(regionalData) {
-  // TODO(rahul): get rid of this hack. Find polygons for Ladakh from https://www.gadm.org/download_country_v3.html.
-  regionalData["Jammu & Kashmir"] += regionalData["Ladakh"];
-  regionalData["Ladakh"] = 0;
+  console.log(regionalData);
 
   var bubbles = [];
   for (var name in state_id_map) {
+    var total = 0;
+    if (name in regionalData) {
+      total =
+        regionalData[name]["Total Cases (Indian)"] +
+        regionalData[name]["Total cases (Foreign National)"];
+      // TODO(rahul): get rid of this hack. Find polygons for Ladakh from https://www.gadm.org/download_country_v3.html.
+      if (name == "Jammu & Kashmir" && "Ladakh" in regionalData) {
+        total =
+          regionalData["Ladakh"]["Total Cases (Indian)"] +
+          regionalData["Ladakh"]["Total cases (Foreign National)"];
+      }
+      console.log(name);
+      console.log(total);
+    }
     var bubble = {
       centered: state_id_map[name],
       fillKey: "MAJOR",
-      radius: Math.sqrt(regionalData[name]) * 2,
-      cases: regionalData[name],
+      radius: Math.sqrt(total) * 2,
+      cases: total,
       state: name
     };
     bubbles.push(bubble);
@@ -106,7 +96,7 @@ function plotMap(regionalData) {
   setTimeout(() => {
     bubble_map.bubbles(bubbles, {
       popupTemplate: function(geo, data) {
-        return `<div class="hoverinfo">Region: ${data.state}, Cases: ${data.cases}</div>`;
+        return `<div>Region: ${data.state}, Cases: ${data.cases}</div>`;
       }
     });
   }, 500);
@@ -121,12 +111,44 @@ function getText(url) {
     if (request.readyState === 4 && request.status === 200) {
       var type = request.getResponseHeader("Content-Type");
       if (type.indexOf("text") !== 1) {
-        allData = parseCsv(request.responseText);
+        console.log(request.responseText);
+        allData = JSON.parse(request.responseText);
+
+        // allData = parseCsv(request.responseText);
         for (var date in allData) {
           dates.push(date);
         }
         initTimeline();
+        showAggregateStats();
       }
     }
   };
+}
+
+function showAggregateStats(name) {
+  var data = allData[selectedDate];
+  var aggregateStats = {};
+  if (name) {
+    var body = `<b>Aggregate stats for ${name} </b><br>`;
+    for (var key in data[name]) {
+      body += key + " : " + data[name][key] + "<br>";
+    }
+    detailStats.innerHTML = body;
+  } else {
+    var body = "<b>Aggregate stats for India </b><br>";
+    for (var state in data) {
+      for (var key in data[state]) {
+        if (aggregateStats[key] == null) {
+          aggregateStats[key] = 0;
+        }
+
+        aggregateStats[key] += data[state][key];
+      }
+    }
+    console.log(aggregateStats);
+    for (var stat in aggregateStats) {
+      body += stat + ": " + aggregateStats[stat] + "<br>";
+    }
+    detailStats.innerHTML = body;
+  }
 }

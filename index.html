@@ -5,8 +5,38 @@
   Distribution of number of people having COVID-19 in India
 </h2>
 <style>
+  .container {
+    width: 1300px;
+    height: 600px;
+    padding: 35px 15px 5px;
+  }
+
+  .container:before,
+  .container:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+  .container div {
+    float: left;
+    width: 280px;
+    height: 160px;
+  }
+
+  #india {
+    margin-left: 30px;
+    margin-right: 30px;
+  }
+
+  #showdetails {
+    margin-left: 30px;
+    margin-right: 30px;
+    margin-top: 200px;
+  }
+
   .slider {
-    margin-top: 100px;
+    margin-top: 0px;
   }
 
   div.timeline {
@@ -20,7 +50,13 @@
   <script src="http://d3js.org/topojson.v1.min.js"></script>
   <script src="util.js"></script>
   <script src="https://rawgit.com/Anujarya300/bubble_maps/master/data/geography-data/datamaps.none.js"></script>
-  <div id="india" style="height: 600px; width: 900px;"></div>
+  <div class="container">
+    <div id="india" style="height: 600px; width: 900px;">
+    </div>
+    <div id="showdetails">
+    </div>
+  </div>
+
   <div class="timeline" id="slidercontainer">
     <input type="range" class="slider" id="daterange" onchange="updateDate(this.value)" oninput="updateDate(this.value)"
       name="ad">
@@ -28,6 +64,7 @@
   </div>
   <div id="output">
   </div>
+
   <script>
 
     function createMap() {
@@ -35,12 +72,11 @@
         element: document.getElementById('india'),
         scope: 'india',
         geographyConfig: {
-          popupOnHover: true,
+          popupOnHover: false,
           highlightOnHover: true,
           borderColor: '#444',
           borderWidth: 0.5,
           dataUrl: 'https://rawgit.com/Anujarya300/bubble_maps/master/data/geography-data/india.topo.json'
-          //dataJson: topoJsonData
         },
         fills: {
           'MAJOR': '#306596',
@@ -54,15 +90,27 @@
             .scale(1000);
           var path = d3.geo.path().projection(projection);
           return { path: path, projection: projection };
+        },
+        done: function (datamap) {
+          datamap.svg.selectAll('.datamaps-subunit').on('click', function (geography) {
+            link = geography.properties.name;
+            console.log("on click");
+            console.log(link);
+            showAggregateStats(geography.properties.name);
+          });
         }
       });
     }
+
     createMap();
 
     var csvurl = "https://raw.githubusercontent.com/rahulgurnani/COVID-19-India/master/data/statewise.csv";
-    var rawData = getText(csvurl);
+    var dataUrl = "https://raw.githubusercontent.com/indihood/COVID-19-India/dev/data/alldates.json";
+    var rawData = getText(dataUrl);
+    console.log(rawData);
     dateOutput = document.getElementById("date");
     dateRange = document.getElementById("daterange");
+    detailStats = document.getElementById("showdetails");
   </script>
 </body>
 
